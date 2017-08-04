@@ -304,49 +304,50 @@ int second_chain[] = {
 
 static int patchesDone = 0;
 
-int asciiToHex(char c)
+u64 asciiToHex(char c)
 {
 	if(c>='0' && c<='9'){return(c-'0');}
 	else if (c>='a' && c<= 'f') {return(c-'a'+10);}
 	else if (c>='A' && c<= 'F') {return(c-'A'+10);}
-	else {return -1;}
+	else {return 42;}
 }
 
 void launchChosenTitle()
 {
-	int fd = open("sd:/wiiu/titleToLaunch.txt",O_CREAT | O_RDONLY | O_APPEND);//check append
+	mount_sd_fat("sd");
+	int fd = open("sd:/wiiu/titleToLaunch.txt",O_CREAT | O_RDWR | O_APPEND);
 	char titleId[16];
+	u64 vals[16];
 	int nbytes= read(fd, titleId, 16);
 	if(nbytes == 16){
 		u64 titleToLaunch;
 		int i;
-		int val1;
-		int val2;
-		char valtot;
-		for(i=0;i<8;i++){
-			val1=asciiToHex(titleId[2*i]);
-			val2=asciiToHex(titleId[2*i+1]);
-			if(val1==-1 || val2==-1){
+		for(i=0;i<16;i++){
+			vals[i]=asciiToHex(titleId[i]);
+			if(vals[i]==42){
 				write(fd,"Bad Format",10);
 				break;
 			}
-			valtot=(char)(val1*16+val2);
-			memcpy(&titleToLaunch+i,&valtot,1);
 		}
-		if(SYSCheckTitleExists(titleToLaunch)){
-			SYSLaunchTitle(titleToLaunch);
-			close(fd);
-			return;
-		}
-		else{
+		if(i==16){
+			titleToLaunch=(vals[0]<<60) |(vals[1]<<56) |(vals[2]<<52) |(vals[3]<<48) |(vals[4]<<44) |(vals[5]<<40) |(vals[6]<<36) |(vals[7]<<32) |(vals[8]<<28) |(vals[9]<<24) |(vals[10]<<20) |(vals[11]<<16)|(vals[12]<<12)|(vals[13]<<8)|(vals[14]<<4)|(vals[15]);
+			write(fd,&titleToLaunch,8);
+			if(SYSCheckTitleExists(titleToLaunch)){
+				SYSLaunchTitle(titleToLaunch);
+				close(fd);
+				unmount_sd_fat("sd");
+				return;
+			}
+			else{
 			write(fd,"Title not installed",19);
+			}
 		}
 		
 	}
 	close(fd);
+	unmount_sd_fat("sd");
 	SYSLaunchMenu();
 	return;
-    //SYSLaunchTitle(0x00050000101C9500);
 }
 
 int Menu_Main(void)
