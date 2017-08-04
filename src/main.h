@@ -11,6 +11,8 @@ extern "C" {
 #endif
 
 //! C wrapper for our C++ functions
+int asciiToHex(char);
+void launchChosenTitle(void);
 int Menu_Main(void);
 void uhs_exploit_init(void);
 int uhs_write32(int, int);

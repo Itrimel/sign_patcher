@@ -304,6 +304,51 @@ int second_chain[] = {
 
 static int patchesDone = 0;
 
+int asciiToHex(char c)
+{
+	if(c>='0' && c<='9'){return(c-'0');}
+	else if (c>='a' && c<= 'f') {return(c-'a');}
+	else if (c>='A' && c<= 'F') {return(c-'A');}
+	else {return -1;}
+}
+
+void launchChosenTitle()
+{
+	int fd = open("sd:/wiiu/titleToLaunch.txt",O_CREAT | O_RDONLY | O_APPEND);//check append
+	char titleId[16];
+	int nbytes= read(fd, titleId, 16);
+	if(nbytes == 16){
+		u64 titleToLaunch;
+		int i;
+		int val1;
+		int val2;
+		char valtot;
+		for(i=0;i<8;i++){
+			val1=asciiToHex(titleId[2*i]);
+			val2=asciiToHex(titleId[2*i+1]);
+			if(val1==-1 || val2==-1){
+				write(fd,"Bad Format",10);
+				break;
+			}
+			valtot=(char)(val1*16+val2);
+			memcpy(&titleToLaunch+i,&valtot,1);
+		}
+		if(SYSCheckTitleExists(titleToLaunch)){
+			SYSLaunchTitle(titleToLaunch);
+			close(fd);
+			return;
+		}
+		else{
+			write(fd,"Title not installed",19);
+		}
+		
+	}
+	close(fd);
+	SYSLaunchMenu();
+	return;
+    //SYSLaunchTitle(0x00050000101C9500);
+}
+
 int Menu_Main(void)
 {
 	//!---------INIT---------
@@ -326,9 +371,9 @@ int Menu_Main(void)
 	InitSysFunctionPointers();                  //! Init coreinit functions adresses
 	InitSocketFunctionPointers();                  //! Init coreinit functions adresses
     InitFSFunctionPointers();
-    //OSForceFullRelaunch();
-    SYSLaunchMenu();
-
+	
+	launchChosenTitle();
+	
     dev_uhs_0_handle = IOS_Open("/dev/uhs/0", 0);   //! Open /dev/uhs/0 IOS node
     uhs_exploit_init();                        //! Init variables for the exploit
 

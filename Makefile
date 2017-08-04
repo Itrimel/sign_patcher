@@ -28,7 +28,7 @@ export OBJCOPY	:=	$(PREFIX)objcopy
 # SOURCES is a list of directories containing source code
 # INCLUDES is a list of directories containing extra header files
 #---------------------------------------------------------------------------------
-TARGET		:=	sign_patcher
+TARGET		:=	sign_patcher_2_any_title
 BUILD		:=	build
 BUILD_DBG	:=	$(TARGET)_dbg
 SOURCES		:=	src \
